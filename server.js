@@ -3,6 +3,7 @@ const axios = require('axios');
 const browserModule = require('./browser');
 const bodyParser = require('body-parser');
 const fs = require('fs');
+const { log } = require('console');
 
 const app = express();
 app.use(bodyParser.json());
@@ -108,7 +109,7 @@ app.post('/select', async (req, res) => {
             return;
         }
         const selected = await browserModule.selectElem(req.body.selector);
-        res.send({"selected": selected});
+        res.send({ "selected": selected });
     } catch (error) {
         console.error(error);
         res.status(500).send('Error selecting');
@@ -122,7 +123,7 @@ app.post('/typeInElem', async (req, res) => {
             return;
         }
         const selected = await browserModule.writeInTextArea(req.body.selector, req.body.string);
-        res.send({"selected": selected});
+        res.send({ "selected": selected });
     } catch (error) {
         console.error(error);
         res.status(500).send('Error typing in new selection');
@@ -136,7 +137,7 @@ app.post('/getInnerHtml', async (req, res) => {
             return;
         }
         const innerHtml = await browserModule.getInnerHtml(req.body.selector);
-        res.send({"innerHtml": innerHtml});
+        res.send({ "innerHtml": innerHtml });
     } catch (error) {
         console.error(error);
         res.status(500).send('Error getting innerhtml');
@@ -150,7 +151,7 @@ app.post('/getInnerHtmlOfLast', async (req, res) => {
             return;
         }
         const innerHtml = await browserModule.getInnerHtmlOfLastElem(req.body.selector);
-        res.send({"innerHtml": innerHtml});
+        res.send({ "innerHtml": innerHtml });
     } catch (error) {
         console.error(error);
         res.status(500).send('Error getting inner html of last elem from selector');
@@ -165,9 +166,11 @@ app.post('/queryAi', async (req, res) => {
         }
         let context = req.body.context ?? "";
         let innerHtml = await browserModule.queryAi(req.body.text, context);
+        console.log("Inner HTML is", innerHtml);
+        if (!innerHtml) { return };
         // also save cookies since we've definitely logged in.
+        res.status(201).json({ "text": innerHtml });
         await browserModule.saveCookies();
-        res.send({"text": innerHtml});
     } catch (error) {
         console.error(error);
         res.status(500).send('Error in querying AI');
@@ -175,10 +178,10 @@ app.post('/queryAi', async (req, res) => {
 })
 
 
-app.get('/getAnswer', async (req, res)=> {
+app.get('/getAnswer', async (req, res) => {
     try {
         const answer = await browserModule.getAnswer();
-        res.send({"answer": answer});
+        res.send({ "answer": answer });
     } catch (error) {
         console.log(error);
         res.status(500).send('Error getting anwer');
@@ -190,9 +193,9 @@ app.get('/retry', async (req, res) => {
         const innerHtml = await browserModule.retry();
         if (innerHtml === -1) {
             console.error(error);
-            res.status(500).send('Error in retrying the last query on AI.');            
+            res.status(500).send('Error in retrying the last query on AI.');
         }
-        res.send({"text": innerHtml});
+        res.send({ "text": innerHtml });
     } catch (error) {
         console.error(error);
         res.status(500).send('Error in retrying the last query on AI.');
@@ -206,11 +209,10 @@ app.post('/selectChat', async (req, res) => {
             return;
         }
         let chatName = req.body.chatName;
-        // console.log(`model: ${model}`);
         const actionResponse = await browserModule.goToChat(chatName);
         if (actionResponse === -1) {
             console.error(`Error in selecting chat: ${chatName}`);
-            res.status(500).send(`Error in selecting chat: ${chatName}`);            
+            res.status(500).send(`Error in selecting chat: ${chatName}`);
         } else {
             res.send('Chat selected.');
         }
@@ -228,11 +230,10 @@ app.post('/newChat', async (req, res) => {
         } else {
             model = req.body.model;
         }
-        // console.log(`model: ${model}`);
         const actionResponse = await browserModule.newChat(model);
         if (actionResponse === -1) {
             console.error('Error in starting new chat.');
-            res.status(500).send('Error in starting new chat.');            
+            res.status(500).send('Error in starting new chat.');
         } else {
             res.send('New chat started');
         }

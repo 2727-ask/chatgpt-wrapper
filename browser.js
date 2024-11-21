@@ -34,9 +34,9 @@ const _chatHistoryContainerSelector = "//nav[@aria-label='Chat history']"
 // const _gptFourButtonXPathSelector = "//div[contains(., 'GPT-4')][contains(@class, 'group/button')]";
 const _gptFourButtonXPathSelector = "//button[contains(., 'GPT-4')]";
 const _gptThreeButtonXPathSelector = "//button[contains(., 'GPT-3.5')]";
-const _maxWaitCount = 400;
-const _generationWaitStepLength = 500;
-const _generationInitialWaitLength = 500;
+const _maxWaitCount = 40000000;
+const _generationWaitStepLength = 5000000;
+const _generationInitialWaitLength = 5000000;
 const _olderChatLoadTime = _generationInitialWaitLength * 6;
 
 async function startBrowser() {
@@ -382,7 +382,9 @@ async function queryAi(message, context) {
 
     const inputSelector = "textarea.block.h-10.w-full.resize-none";
     const answerSelector = "div .markdown";
-    await inputStringInSelector(inputSelector, queryString);
+    await page.keyboard.sendCharacter(queryString);
+    await page.keyboard.press('Enter');
+    // await inputStringInSelector(inputSelector, queryString);
     // let isCopyButtonPresent = await waitForCopyButtonToAppear();
     const buttonSelector = 'button[aria-label="Bad response"]';
     let isCopyButtonPresent = await waitForNewButton(page, buttonSelector)
@@ -429,7 +431,7 @@ async function waitForNewButton(page, selector) {
         // Wait until a new button with the selector appears (count increases)
         await page.waitForFunction(
             (selector, initialCount) => document.querySelectorAll(selector).length > initialCount,
-            {}, // Options (can specify timeout here if needed)
+            {timeout: _maxWaitCount},
             selector,
             initialCount
         );
